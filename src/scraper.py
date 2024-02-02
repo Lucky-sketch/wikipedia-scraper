@@ -1,7 +1,6 @@
-from requests import Session
+import requests
 from bs4 import BeautifulSoup
 import json
-import csv
 import re
 
 class WikipediaScraper:
@@ -9,19 +8,15 @@ class WikipediaScraper:
     A class for scraping data from a country leaders website.
     """
 
-    def __init__(self, session: Session):
+    def __init__(self):
         """
         Initialize the WikipediaScraper instance.
-
-        Parameters:
-        - session (Session): The requests Session object.
         """
         self.base_url = "https://country-leaders.onrender.com"
         self.country_endpoint = "/countries"
         self.leaders_endpoint = "/leaders"
         self.cookies_endpoint = "/cookie"
         self.check_endpoint = "/check"
-        self.session: Session = session
         self.leaders_data = {}
         self.cookie = ""
 
@@ -29,7 +24,7 @@ class WikipediaScraper:
         """
         Refresh the cookie by querying the /cookie endpoint.
         """
-        cookie_response = self.session.get(f"{self.base_url}{self.cookies_endpoint}")
+        cookie_response = requests.get(f"{self.base_url}{self.cookies_endpoint}")
         self.cookie = cookie_response.cookies
 
     def get_countries(self):
@@ -39,7 +34,7 @@ class WikipediaScraper:
         Returns:
         - list: List of supported countries.
         """
-        countries_response = self.session.get(f"{self.base_url}{self.country_endpoint}", cookies=self.cookie)
+        countries_response = requests.get(f"{self.base_url}{self.country_endpoint}", cookies=self.cookie)
         return countries_response.json()
 
     def get_leaders(self, country):
@@ -49,7 +44,7 @@ class WikipediaScraper:
         Parameters:
         - country (str): The country for which leaders' data is requested.
         """
-        leaders_response = self.session.get(f"{self.base_url}{self.leaders_endpoint}", params={"country": country}, cookies=self.cookie)
+        leaders_response = requests.get(f"{self.base_url}{self.leaders_endpoint}", params={"country": country}, cookies=self.cookie)
         self.leaders_data[country] = leaders_response.json()
 
     def get_first_paragraph(self, wikipedia_url):
@@ -62,7 +57,7 @@ class WikipediaScraper:
         Returns:
         - str: The first paragraph text.
         """
-        response = self.session.get(wikipedia_url, cookies=self.cookie)
+        response = requests.get(wikipedia_url, cookies=self.cookie)
         soup = BeautifulSoup(response.text, 'html.parser')
         for tag in soup.find_all(name="p"):
             if not tag.find(name="b"): continue
@@ -88,26 +83,6 @@ class WikipediaScraper:
         with open(filepath, 'w') as json_file:
             json.dump(self.leaders_data, json_file, ensure_ascii=False, indent=4)
 
-    def to_csv_file(self, filepath):
-        """
-        Store the data structure into a CSV file.
-
-        Parameters:
-        - filepath (str): The path to the output CSV file.
-        """
-        # Extracting field names from the leaders_data dictionary
-        field_names = ["Country"] + list(self.leaders_data[list(self.leaders_data.keys())[0]][0].keys())
-
-        # Writing to the CSV file
-        with open(filepath, 'w', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=field_names)
-
-            # Writing header
-            writer.writeheader()
-            # Writing data rows
-            for country, leaders in self.leaders_data.items():
-                for leader in leaders:
-                    writer.writerow({"Country": country, **leader})
 
     def update_leaders_data(self, country, f_paragraph, id):
         """
@@ -129,7 +104,7 @@ class WikipediaScraper:
         Returns:
         - bool: True if the cookie is valid, False otherwise.
         """
-        response = self.session.get(f"{self.base_url}{self.check_endpoint}", cookies=self.cookie)
+        response = requests.get(f"{self.base_url}{self.check_endpoint}", cookies=self.cookie)
         return "The cookie is valid" in response.text
 
     @staticmethod

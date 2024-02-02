@@ -1,10 +1,10 @@
-from requests import Session
 from src.scraper import WikipediaScraper
 
 def process_countries(scraper):
     """
     Process countries, retrieve leaders' data, and update first paragraphs.
     """
+    scraper.refresh_cookie()
     countries = scraper.get_countries()
 
     print("Processing... ")
@@ -28,18 +28,14 @@ def main():
     Main entry point for the program.
     """
     try:
-        scraper = WikipediaScraper(Session())
-        scraper.refresh_cookie()
+        scraper = WikipediaScraper()
 
         # Process countries and update leaders' data
         process_countries(scraper)
 
-        # Switch to store data in different formats
-        choice1 = input("Do you want to store the data as json(1) or csv(2): ")
-        if choice1 == "1":
-            scraper.to_json_file("output.json")
-        elif choice1 == "2":
-            scraper.to_csv_file("output.csv")
+        # Store the data only in JSON format by default
+        scraper.to_json_file("output.json")
+        print("Data stored in output.json")
 
     except Exception as main_error:
         print(f"Main Error: {main_error}")
