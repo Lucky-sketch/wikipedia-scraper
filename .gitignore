@@ -1,4 +1,4 @@
 # .gitignore
-venv/
+my_environment/
 __pycache__/
 .DS_Store
